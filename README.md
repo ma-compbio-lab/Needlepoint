@@ -39,12 +39,6 @@ For CUDA, install the appropriate Torch build before installing `.[gp]`.
 - [Implementation](src/needlepoint): Python source and its reference
   policy resource.
 
-## Source
-
-The implementation is based on Needlepoint commit
-[`e695b592ea0271d286d8da4af357c4d7255c9d64`](https://github.com/yangyuanz/needlepoint/tree/e695b592ea0271d286d8da4af357c4d7255c9d64).
-Saved runs record their source identity and must use the matching source
-snapshot when resumed.
 
 ## Licensing
 
