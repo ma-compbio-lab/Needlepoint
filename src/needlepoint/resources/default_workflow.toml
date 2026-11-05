@@ -1,0 +1,139 @@
+schema_version = 1
+status = "future-development-default"
+canonical_package = "needlepoint"
+canonical_source_root = "src/needlepoint"
+
+[preprocessing]
+normalization_scope = "full-library"
+target_sum = 10000.0
+transform = "log1p"
+
+[scoring]
+backend = "grid-fft-cuda"
+selection_mode = "empirical-fdr"
+fdr_q = 0.05
+max_artifact_like_score = 0.35
+panel_size_policy = "all-passing-no-fill-no-truncation"
+
+[length_scale_screen]
+# Direct-SKI finite residual exceedances are diagnostic by default.
+residual_tolerance = 1e-6
+residual_policy = "warn"
+backend = "ski"
+device = "cuda"
+use_all_training_spots = true
+allow_spot_subsampling = false
+candidate_partition_axis = "length-scale"
+candidate_partition_strategy = "compute-balanced-contiguous"
+candidate_workers = 2
+feature_chunk_policy = "largest-memory-safe-up-to-full-panel"
+grid_size = 128
+max_cg_iterations = 1000
+cg_tolerance = 0.001
+random_probe_policy = "seeded-serial-stream-with-candidate-offset"
+write_holdout_table_per_shard = false
+completion_marker = "initial_length_scale_screen_summary.json"
+merge_command = "needlepoint-merge-lengthscale-screens"
+require_exhaustive_disjoint_merge = true
+
+[gp]
+model = "joint-global-local"
+observation_model = "gaussian"
+global_backend = "vski"
+local_backend = "vnngp"
+global_grid_eigensolver = "torch"
+global_reuse_identical_axes = false # Explicit CRC adapter opt-in; shared default unchanged.
+grid_size = 128
+length_scale_initialization = "per-feature-screen"
+geometry_cache_mode = "readwrite"
+feature_shard_merge = "strict"
+
+[gp.experimental_count_arm]
+observation_model = "poisson-log"
+normalization_scope = "exposure-offset"
+transform = "none"
+exposure = "full-library raw count before selected-panel subsetting"
+posterior_map_scale = "expected count rate at the median training exposure"
+status = "experimental; requires an explicit dataset run config"
+
+[gp.evaluation]
+fit_purpose = "evaluation"
+random_holdout_fraction = 0.02
+blocked_holdout_fraction = 0.02
+downstream_ready = false
+
+[gp.production]
+fit_purpose = "production"
+random_holdout_fraction = 0.0
+blocked_holdout_fraction = 0.0
+require_full_training_coverage = true
+downstream_ready = true
+
+[prototypes]
+method = "functional"
+n_initial = 20
+merge_similar = true
+merge_map_correlation = 0.90
+fit_scope = "per-section-per-resolution"
+
+[prototypes.experimental_multiscale_initialization]
+enabled = false
+method = "multiscale-sketch"
+physical_scales_um = [16.0, 64.0, 256.0]
+total_embedding_dimensions = [1024, 2048, 4096]
+projection_seed = 20260922
+filter_absolute_error = 0.00001
+distance_error_p95_max = 0.10
+full_field_refinement_unchanged = true
+preserve_all_support_sites = true
+require_source_matched_embedding = true
+
+[lbm]
+domain_counts = [4, 8, 12]
+graph_model = "boundary-aware"
+domain_initialization_module_weighting = "mass-reliability"
+max_iterations = 30
+convergence_tolerance = 0.0001
+compute_backend = "torch"
+compute_device = "cuda"
+compute_dtype = "float32"
+require_production_gp = true
+
+[provenance]
+require_config_hash = true
+require_source_snapshot = true
+require_summary_last_completion = true
+
+[length_scale_screen.direct_ski_opt_in]
+backend = "ski-direct-lu-v1"
+enabled_by_default = false
+maximum_validated_grid_size = 128
+kernel_construction_dtype = "float32"
+solve_dtype = "float64"
+residual_tolerance = 0.000001
+all_observations_required = true
+historical_slq_equivalence = false
+completion_marker = "initial_length_scale_screen_summary.json"
+checkpoint_unit = "scale-fraction-candidate"
+
+[gp.storage]
+output_dtype = "float16"
+retain_predictive_variance = false
+retain_component_maps = false
+retain_latent_maps = false
+retain_caches = false
+materialize_downstream_maps = false
+retain_shard_maps = false
+note = "Retain mappable NPZ total posterior mean/variance and essential metadata. Training stays float32; export overflow fails. Downstream readers cast active blocks in RAM; full FP32 disk caches are opt-in."
+
+[gp.experimental_grid_eigensolver]
+enabled = false
+default_backend = "torch"
+opt_in_backend = "jacobi-experimental"
+factor_dtype = "float64"
+solver = "loaded-cuSOLVER-DsyevjBatched"
+tolerance = 1e-14
+max_sweeps = 100
+require_solver_convergence = true
+optimizer_schedule_unchanged = true
+status = "explicit AD Bin10 continuation opt-in; full-run acceptance pending; no automatic hardware or CPU fallback"

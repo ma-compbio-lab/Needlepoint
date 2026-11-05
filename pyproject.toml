@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "needlepoint"
+version = "0.2.0"
+description = "Multiscale spatial expression fields, uncertainty-aware prototypes, and spatial domains"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["anndata>=0.10", "numpy>=1.24", "scipy>=1.10", "pandas>=2", "matplotlib>=3.7", "scikit-learn>=1.3", "h5py>=3.9", "threadpoolctl>=3"]
+
+[project.optional-dependencies]
+gp = ["torch>=2.2", "gpytorch>=1.11", "linear-operator>=0.5", "pyarrow>=12"]
+parquet = ["pyarrow>=12"]
+zarr = ["zarr>=2.18,<4"]
+
+[project.scripts]
+needlepoint = "needlepoint.__main__:main"
+needlepoint-run = "needlepoint.cli.run_workflow:main"
+needlepoint-score = "needlepoint.scoring.multiscale_contrast:main"
+needlepoint-fit-non-gaussian = "needlepoint.cli.fit_non_gaussian:main"
+needlepoint-fit-h5ad = "needlepoint.cli.run_h5ad_joint_global_local:main"
+needlepoint-prototypes = "needlepoint.cli.run_spatial_prototypes:main"
+needlepoint-merge-gp-shards = "needlepoint.cli.merge_gp_shards:main"
+needlepoint-lbm = "needlepoint.cli.run_lbm:main"
+needlepoint-provenance = "needlepoint.cli.write_provenance:main"
+needlepoint-condition-gaussian = "needlepoint.cli.condition_gaussian:main"
+needlepoint-merge-lengthscale-screens = "needlepoint.cli.merge_lengthscale_screens:main"
+needlepoint-screen-direct-ski = "needlepoint.cli.run_direct_ski_screen:main"
+
+[tool.setuptools]
+license-files = ["LICENSES/*.txt"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+needlepoint = ["resources/*.toml"]
